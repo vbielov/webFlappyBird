@@ -1,12 +1,10 @@
 import { Animator } from "./Animator";
 import { GameObject } from "./GameObject";
-import { bird, canvas, fps, renderScale } from "./Main";
+import { bird, canvas, fps, renderScale, score } from "./Main";
 import { Rect } from "./Rect";
 
 const maxHole = 175;
 const minHole = 175;
-
-const speed = 100;
 
 export class Pipes extends GameObject
 {
@@ -37,7 +35,7 @@ export class Pipes extends GameObject
     {
         for(var i = 0; i < this.pipesObjects.length; i++)
         {
-            this.pipesObjects[i].rect.x -= speed * (1 / fps);
+            this.pipesObjects[i].rect.x -= this.GetCurrentSpeed() * (1 / fps);
 
             if(this.pipesObjects[i].rect.AABBCollision(bird.rect) === true)
             {
@@ -49,8 +47,15 @@ export class Pipes extends GameObject
         {
             this.pipesObjects.shift();
             this.pipesObjects.shift();
+            score.AddPoint();
             this.GeneratePipe();
         }
+    }
+
+    GetCurrentSpeed(): number
+    {
+        const speedDouble = 1; 
+        return 100 + (2 / speedDouble) * score.GetScore();
     }
 
     Render(): void 

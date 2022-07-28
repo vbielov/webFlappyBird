@@ -42,24 +42,64 @@ define("Rect", ["require", "exports"], function (require, exports) {
     }
     exports.Rect = Rect;
 });
-define("Pipes", ["require", "exports", "Animator", "GameObject", "Main", "Rect"], function (require, exports, Animator_1, GameObject_1, Main_1, Rect_1) {
+define("ParalaxBackground", ["require", "exports", "Animator", "GameObject", "Main", "Rect"], function (require, exports, Animator_1, GameObject_1, Main_1, Rect_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.ParalaxBackground = void 0;
+    class ParalaxBackground extends GameObject_1.GameObject {
+        constructor() {
+            super("ParalaxBackground", null, null);
+            this.backgrounds = [];
+            this.position = 0;
+            this.Init();
+        }
+        Init() {
+            const amountOfBackgrounds = 2;
+            for (var i = 0; i < amountOfBackgrounds; i++) {
+                this.backgrounds.push(new GameObject_1.GameObject("Background: " + i, new Rect_1.Rect(i * Main_1.canvas.width / Main_1.renderScale, 0, Main_1.canvas.width / Main_1.renderScale * 1.3, Main_1.canvas.height / Main_1.renderScale * 1.3), new Animator_1.Animator([{ imageID: "background", stateName: "Day" }])));
+            }
+        }
+        Update() {
+            const paralaxScale = 0.3;
+            for (var i = 0; i < this.backgrounds.length; i++) {
+                this.backgrounds[i].rect.x -= (Main_1.pipes.GetCurrentSpeed() * paralaxScale * (1 / Main_1.fps));
+                this.backgrounds[i].rect.y = -(Main_1.bird.rect.y - Main_1.canvas.height / 2 / Main_1.renderScale) * 0.1 - 50;
+            }
+            for (var i = 0; i < this.backgrounds.length; i++) {
+                if (this.backgrounds[i].rect.x + this.backgrounds[i].rect.width < 0) {
+                    var maxPos = -99999999999;
+                    for (var p = 0; p < this.backgrounds.length; p++) {
+                        maxPos = Math.max(this.backgrounds[p].rect.x + this.backgrounds[p].rect.width, maxPos);
+                    }
+                    this.backgrounds[i].rect.x = maxPos;
+                }
+            }
+        }
+        Render() {
+            for (var i = 0; i < this.backgrounds.length; i++) {
+                this.backgrounds[i].Render();
+            }
+        }
+    }
+    exports.ParalaxBackground = ParalaxBackground;
+});
+define("Pipes", ["require", "exports", "Animator", "GameObject", "Main", "Rect"], function (require, exports, Animator_2, GameObject_2, Main_2, Rect_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Pipes = void 0;
     const maxHole = 175;
     const minHole = 175;
-    const speed = 100;
-    class Pipes extends GameObject_1.GameObject {
+    class Pipes extends GameObject_2.GameObject {
         constructor() {
             super("Pipes");
             this.pipesObjects = [];
             this.GeneratePipe();
         }
         GeneratePipe() {
-            var bottomPipe = new GameObject_1.GameObject("Bottom pipe", new Rect_1.Rect(Main_1.canvas.width / Main_1.renderScale, 0, 39, 240), new Animator_1.Animator([{ imageID: "pipe_up", stateName: "Static" }]));
-            var topPipe = new GameObject_1.GameObject("Top pipe", new Rect_1.Rect(Main_1.canvas.width / Main_1.renderScale, 0, 38, 240), new Animator_1.Animator([{ imageID: "pipe_down", stateName: "Static" }]));
+            var bottomPipe = new GameObject_2.GameObject("Bottom pipe", new Rect_2.Rect(Main_2.canvas.width / Main_2.renderScale, 0, 39, 240), new Animator_2.Animator([{ imageID: "pipe_up", stateName: "Static" }]));
+            var topPipe = new GameObject_2.GameObject("Top pipe", new Rect_2.Rect(Main_2.canvas.width / Main_2.renderScale, 0, 38, 240), new Animator_2.Animator([{ imageID: "pipe_down", stateName: "Static" }]));
             var randomHeight = Math.random() * (maxHole - minHole) + minHole;
-            var randomY = Math.random() * (Main_1.canvas.height / Main_1.renderScale - randomHeight);
+            var randomY = Math.random() * (Main_2.canvas.height / Main_2.renderScale - randomHeight);
             bottomPipe.rect.y = randomY - bottomPipe.rect.height;
             topPipe.rect.y = randomHeight + randomY;
             this.pipesObjects.push(bottomPipe);
@@ -67,16 +107,21 @@ define("Pipes", ["require", "exports", "Animator", "GameObject", "Main", "Rect"]
         }
         Update() {
             for (var i = 0; i < this.pipesObjects.length; i++) {
-                this.pipesObjects[i].rect.x -= speed * (1 / Main_1.fps);
-                if (this.pipesObjects[i].rect.AABBCollision(Main_1.bird.rect) === true) {
-                    Main_1.bird.Die();
+                this.pipesObjects[i].rect.x -= this.GetCurrentSpeed() * (1 / Main_2.fps);
+                if (this.pipesObjects[i].rect.AABBCollision(Main_2.bird.rect) === true) {
+                    Main_2.bird.Die();
                 }
             }
             if (this.pipesObjects[0].rect.x + this.pipesObjects[0].rect.width < 0) {
                 this.pipesObjects.shift();
                 this.pipesObjects.shift();
+                Main_2.score.AddPoint();
                 this.GeneratePipe();
             }
+        }
+        GetCurrentSpeed() {
+            const speedDouble = 1;
+            return 100 + (2 / speedDouble) * Main_2.score.GetScore();
         }
         Render() {
             for (var i = 0; i < this.pipesObjects.length; i++) {
@@ -85,38 +130,6 @@ define("Pipes", ["require", "exports", "Animator", "GameObject", "Main", "Rect"]
         }
     }
     exports.Pipes = Pipes;
-});
-define("Main", ["require", "exports", "Animator", "Bird", "GameObject", "Pipes", "Rect"], function (require, exports, Animator_2, Bird_1, GameObject_2, Pipes_1, Rect_2) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.bird = exports.fps = exports.renderScale = exports.ctx = exports.canvas = void 0;
-    exports.canvas = document.getElementById("canvas");
-    exports.ctx = exports.canvas.getContext("2d");
-    if (exports.ctx === undefined || exports.ctx === null)
-        throw new Error("2D context isn't found");
-    exports.ctx.imageSmoothingQuality = "low";
-    exports.ctx.imageSmoothingEnabled = false;
-    exports.renderScale = 2;
-    exports.fps = 45;
-    var background = new GameObject_2.GameObject("background", new Rect_2.Rect(0, 0, exports.canvas.width / exports.renderScale, exports.canvas.height / exports.renderScale), new Animator_2.Animator([{ imageID: "background", stateName: "Day" }]));
-    var pipes = new Pipes_1.Pipes();
-    exports.bird = new Bird_1.Bird();
-    function Update() {
-        if (exports.bird.IsAlive() === false)
-            return;
-        Render();
-        exports.bird.Update();
-        pipes.Update();
-    }
-    function Render() {
-        if (exports.ctx === undefined || exports.ctx === null)
-            return;
-        exports.ctx.clearRect(0, 0, exports.canvas.width, exports.canvas.height);
-        background.Render();
-        pipes.Render();
-        exports.bird.Render();
-    }
-    setInterval(() => Update(), 1 / exports.fps * 1000);
 });
 define("Vector", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -169,7 +182,113 @@ define("Vector", ["require", "exports"], function (require, exports) {
     }
     exports.Vector = Vector;
 });
-define("GameObject", ["require", "exports", "Main", "Vector"], function (require, exports, Main_2, Vector_1) {
+define("TextUI", ["require", "exports", "GameObject", "Main", "Vector"], function (require, exports, GameObject_3, Main_3, Vector_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.TextUI = void 0;
+    var fontImage = document.getElementById("font");
+    const letterWidth = 14;
+    const letterHeight = 16;
+    const spaceLetterWidth = 18;
+    const spaceLetterHeight = 3;
+    const lettersInRow = 10;
+    const charString = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,?!:-+♥';
+    const charArr = charString.split('');
+    class TextUI extends GameObject_3.GameObject {
+        constructor(text, rect) {
+            super("TextUI", rect, null);
+            this.AssignText(text);
+        }
+        AssignText(text) {
+            var tempText = text.split(/\r?\n/);
+            this.text = new Array(tempText.length);
+            for (var i = 0; i < tempText.length; i++) {
+                this.text[i] = tempText[i].split('');
+            }
+        }
+        Render() {
+            var textHeight = 0;
+            for (var y = 0; y < this.text.length; y++) {
+                var textLine = this.text[y];
+                textHeight = (letterHeight + spaceLetterHeight) * y;
+                var textWidth = 0;
+                for (var x = 0; x < textLine.length; x++) {
+                    var index = charArr.findIndex((char) => char === textLine[x]);
+                    if (textLine[x] === " ") {
+                        textWidth += spaceLetterWidth;
+                        continue;
+                    }
+                    if (index === -1)
+                        index = 64;
+                    var charPosition = new Vector_1.Vector((index % lettersInRow) * (letterWidth + spaceLetterWidth), Math.floor(index / lettersInRow) * (letterHeight + spaceLetterHeight));
+                    this.RenderLetter(charPosition, Vector_1.Vector.Add(new Vector_1.Vector(textWidth, textHeight), new Vector_1.Vector(this.rect.x, this.rect.y)));
+                    textWidth += letterWidth + 1;
+                }
+            }
+        }
+        RenderLetter(charImagePosition, charCanvasPosition) {
+            Main_3.ctx.drawImage(fontImage, charImagePosition.x, charImagePosition.y, letterWidth, letterHeight, charCanvasPosition.x, Main_3.ctx.canvas.height - charCanvasPosition.y - letterHeight, letterWidth, letterHeight);
+        }
+        Update() { }
+    }
+    exports.TextUI = TextUI;
+});
+define("Score", ["require", "exports", "Rect", "TextUI"], function (require, exports, Rect_3, TextUI_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Score = void 0;
+    class Score extends TextUI_1.TextUI {
+        constructor(x, y, points) {
+            super("score: 0", new Rect_3.Rect(x, y, 0, 0));
+            this.points = 0;
+            this.points = points || this.points;
+        }
+        AddPoint() {
+            this.points += 1;
+            this.AssignText("score: " + this.points.toString());
+        }
+        GetScore() {
+            return this.points;
+        }
+    }
+    exports.Score = Score;
+});
+define("Main", ["require", "exports", "Bird", "ParalaxBackground", "Pipes", "Score"], function (require, exports, Bird_1, ParalaxBackground_1, Pipes_1, Score_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.score = exports.bird = exports.pipes = exports.background = exports.fps = exports.renderScale = exports.ctx = exports.canvas = void 0;
+    exports.canvas = document.getElementById("canvas");
+    exports.ctx = exports.canvas.getContext("2d");
+    if (exports.ctx === undefined || exports.ctx === null)
+        throw new Error("2D context isn't found");
+    exports.ctx.imageSmoothingQuality = "low";
+    exports.ctx.imageSmoothingEnabled = false;
+    exports.renderScale = 2;
+    exports.fps = 45;
+    exports.background = new ParalaxBackground_1.ParalaxBackground();
+    exports.pipes = new Pipes_1.Pipes();
+    exports.bird = new Bird_1.Bird();
+    exports.score = new Score_1.Score(10, exports.canvas.height - 26);
+    function Update() {
+        if (exports.bird.IsAlive() === false)
+            return;
+        Render();
+        exports.bird.Update();
+        exports.pipes.Update();
+        exports.background.Update();
+    }
+    function Render() {
+        if (exports.ctx === undefined || exports.ctx === null)
+            return;
+        exports.ctx.clearRect(0, 0, exports.canvas.width, exports.canvas.height);
+        exports.background.Render();
+        exports.pipes.Render();
+        exports.bird.Render();
+        exports.score.Render();
+    }
+    setInterval(() => Update(), 1 / exports.fps * 1000);
+});
+define("GameObject", ["require", "exports", "Main", "Vector"], function (require, exports, Main_4, Vector_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.GameObject = void 0;
@@ -191,28 +310,28 @@ define("GameObject", ["require", "exports", "Main", "Vector"], function (require
         Render() {
             if (this.animator === null || this.animator.currentImage === null)
                 return;
-            Main_2.ctx.save();
-            Main_2.ctx.rotate(this.rotation * Math.PI / 180);
-            var pos = new Vector_1.Vector(this.rect.x, Main_2.canvas.height / Main_2.renderScale - (this.rect.y + this.rect.height));
-            var unRotatedPos = Vector_1.Vector.Rotate(pos, new Vector_1.Vector(-this.rect.width / 2, -this.rect.height / 2), -this.rotation);
-            Main_2.ctx.drawImage(this.animator.currentImage, unRotatedPos.x * Main_2.renderScale, unRotatedPos.y * Main_2.renderScale, this.rect.width * Main_2.renderScale, this.rect.height * Main_2.renderScale);
-            Main_2.ctx.restore();
+            Main_4.ctx.save();
+            Main_4.ctx.rotate(this.rotation * Math.PI / 180);
+            var pos = new Vector_2.Vector(this.rect.x, Main_4.canvas.height / Main_4.renderScale - (this.rect.y + this.rect.height));
+            var unRotatedPos = Vector_2.Vector.Rotate(pos, new Vector_2.Vector(-this.rect.width / 2, -this.rect.height / 2), -this.rotation);
+            Main_4.ctx.drawImage(this.animator.currentImage, unRotatedPos.x * Main_4.renderScale, unRotatedPos.y * Main_4.renderScale, this.rect.width * Main_4.renderScale, this.rect.height * Main_4.renderScale);
+            Main_4.ctx.restore();
         }
     }
     exports.GameObject = GameObject;
 });
-define("Bird", ["require", "exports", "Animator", "GameObject", "Main", "Rect"], function (require, exports, Animator_3, GameObject_3, Main_3, Rect_3) {
+define("Bird", ["require", "exports", "Animator", "GameObject", "Main", "Rect"], function (require, exports, Animator_3, GameObject_4, Main_5, Rect_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Bird = void 0;
-    class Bird extends GameObject_3.GameObject {
+    class Bird extends GameObject_4.GameObject {
         constructor() {
             var animator = new Animator_3.Animator([
                 { imageID: "bird_glide", stateName: "Glide" },
                 { imageID: "bird_fall", stateName: "Fall" },
                 { imageID: "bird_jump", stateName: "Jump" }
             ]);
-            super("bird", new Rect_3.Rect(Main_3.canvas.width / Main_3.renderScale * 0.2 - 10, Main_3.canvas.height / Main_3.renderScale / 2 - 10, 20, 20), animator);
+            super("bird", new Rect_4.Rect(Main_5.canvas.width / Main_5.renderScale * 0.2 - 10, Main_5.canvas.height / Main_5.renderScale / 2 - 10, 20, 20), animator);
             this.yVelocity = 0;
             this.alive = true;
             const birdReference = this;
@@ -236,12 +355,12 @@ define("Bird", ["require", "exports", "Animator", "GameObject", "Main", "Rect"],
         }
         Update() {
             super.Update();
-            this.rect.y = Math.max(0, this.rect.y + this.yVelocity * (1 / Main_3.fps));
-            this.rect.y = Math.min(Main_3.canvas.height / Main_3.renderScale - this.rect.height, this.rect.y);
-            this.yVelocity -= 150 * (1 / Main_3.fps);
+            this.rect.y = Math.max(0, this.rect.y + this.yVelocity * (1 / Main_5.fps));
+            this.rect.y = Math.min(Main_5.canvas.height / Main_5.renderScale - this.rect.height, this.rect.y);
+            this.yVelocity -= 150 * (1 / Main_5.fps);
             if (this.rect.y <= 0)
                 this.yVelocity = 0;
-            if (this.rect.y >= Main_3.canvas.height / Main_3.renderScale - this.rect.height)
+            if (this.rect.y >= Main_5.canvas.height / Main_5.renderScale - this.rect.height)
                 this.yVelocity = Math.min(0, this.yVelocity);
             const velocityRange = 70;
             var effect = this.yVelocity / velocityRange;
@@ -274,12 +393,4 @@ define("Bird", ["require", "exports", "Animator", "GameObject", "Main", "Rect"],
         }
     }
     exports.Bird = Bird;
-});
-define("ParalaxBackground", ["require", "exports", "GameObject"], function (require, exports, GameObject_4) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ParalaxBackground = void 0;
-    class ParalaxBackground extends GameObject_4.GameObject {
-    }
-    exports.ParalaxBackground = ParalaxBackground;
 });
