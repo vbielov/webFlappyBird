@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Flappy Bird</title>
+        <meta charset="utf-8">
+        <style>
+            body {
+                margin: 0;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                display: flex;
+            }
+
+            html {
+                background-color: #222129
+            }
+
+            canvas {
+                background-color: #070707;
+                height: 100vh;
+
+            }
+
+            .hide {
+                visibility: hidden;
+                position: absolute;
+            }
+
+        </style>
+    </head>
+    <body>
+        <!-- Import files -->
+        <img src="bird_fall.png" id="bird_fall" class="hide">
+        <img src="bird_glide.png" id="bird_glide" class="hide">
+        <img src="bird_jump.png" id="bird_jump" class="hide">
+
+        <img src="pipe_down.png" id="pipe_down" class="hide">
+        <img src="pipe_up.png" id="pipe_up" class="hide">
+
+        <img src="background.png" id="background" class="hide">
+
+        <!-- Main canvas -->
+        <canvas id="canvas" width="360" height="720">
+            Your browser is not supporting canvas. :(
+            </canvas>
+            
+        <!-- Script -->
+        <!-- starter.js will be executed after require.js is loaded -->
+        <script data-main="./build/starter.js" src="./lib/require.js"></script>
+    </body>
+</html>

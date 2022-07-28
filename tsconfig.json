@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "node",
+        "module": "amd",
+        "target": "ES6",
+        "removeComments": true,
+        "watch": true,
+        "outFile": "./build/build.js",
+        "rootDir": "./src/",
+    },
+}
