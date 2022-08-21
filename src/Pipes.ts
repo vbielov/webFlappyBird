@@ -1,6 +1,6 @@
 import { Animator } from "./Animator";
 import { GameObject } from "./GameObject";
-import { bird, canvas, fps, renderScale, score } from "./Main";
+import { bird, canvas, fps, renderScale, score, GetGameState, GameState} from "./Main";
 import { Rect } from "./Rect";
 
 const maxHole = 175;
@@ -33,6 +33,8 @@ export class Pipes extends GameObject
 
     Update(): void 
     {
+        
+
         for(var i = 0; i < this.pipesObjects.length; i++)
         {
             this.pipesObjects[i].rect.x -= this.GetCurrentSpeed() * (1 / fps);
@@ -54,7 +56,8 @@ export class Pipes extends GameObject
 
     GetCurrentSpeed(): number
     {
-        const speedDouble = 1; 
+        if(GetGameState() == GameState.Waiting) return 0;
+        const speedDouble = 1;
         return 100 + (2 / speedDouble) * score.GetScore();
     }
 

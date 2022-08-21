@@ -20,9 +20,25 @@ export var pipes = new Pipes();
 export var bird = new Bird();
 export var score = new Score(10, canvas.height - 26);
 
+export enum GameState {
+    Waiting,
+    Flying
+}
+var gameState: GameState = GameState.Waiting;
+
+export function GetGameState() { return gameState; }
+export function StartGame() 
+{ 
+    bird = new Bird();
+    pipes = new Pipes();
+    score = new Score(10, canvas.height - 26);
+    gameState = GameState.Flying;
+}
+export function StopGame() { gameState = GameState.Waiting; }
+    
+
 function Update()
 {
-    if(bird.IsAlive() === false) return;
     Render();
     bird.Update();
     pipes.Update();

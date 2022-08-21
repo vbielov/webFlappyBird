@@ -63,7 +63,6 @@ define("ParalaxBackground", ["require", "exports", "Animator", "GameObject", "Ma
             const paralaxScale = 0.3;
             for (var i = 0; i < this.backgrounds.length; i++) {
                 this.backgrounds[i].rect.x -= (Main_1.pipes.GetCurrentSpeed() * paralaxScale * (1 / Main_1.fps));
-                this.backgrounds[i].rect.y = -(Main_1.bird.rect.y - Main_1.canvas.height / 2 / Main_1.renderScale) * 0.1 - 50;
             }
             for (var i = 0; i < this.backgrounds.length; i++) {
                 if (this.backgrounds[i].rect.x + this.backgrounds[i].rect.width < 0) {
@@ -71,7 +70,7 @@ define("ParalaxBackground", ["require", "exports", "Animator", "GameObject", "Ma
                     for (var p = 0; p < this.backgrounds.length; p++) {
                         maxPos = Math.max(this.backgrounds[p].rect.x + this.backgrounds[p].rect.width, maxPos);
                     }
-                    this.backgrounds[i].rect.x = maxPos;
+                    this.backgrounds[i].rect.x = Math.floor(maxPos);
                 }
             }
         }
@@ -120,6 +119,8 @@ define("Pipes", ["require", "exports", "Animator", "GameObject", "Main", "Rect"]
             }
         }
         GetCurrentSpeed() {
+            if ((0, Main_2.GetGameState)() == Main_2.GameState.Waiting)
+                return 0;
             const speedDouble = 1;
             return 100 + (2 / speedDouble) * Main_2.score.GetScore();
         }
@@ -256,7 +257,7 @@ define("Score", ["require", "exports", "Rect", "TextUI"], function (require, exp
 define("Main", ["require", "exports", "Bird", "ParalaxBackground", "Pipes", "Score"], function (require, exports, Bird_1, ParalaxBackground_1, Pipes_1, Score_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.score = exports.bird = exports.pipes = exports.background = exports.fps = exports.renderScale = exports.ctx = exports.canvas = void 0;
+    exports.StopGame = exports.StartGame = exports.GetGameState = exports.GameState = exports.score = exports.bird = exports.pipes = exports.background = exports.fps = exports.renderScale = exports.ctx = exports.canvas = void 0;
     exports.canvas = document.getElementById("canvas");
     exports.ctx = exports.canvas.getContext("2d");
     if (exports.ctx === undefined || exports.ctx === null)
@@ -269,9 +270,24 @@ define("Main", ["require", "exports", "Bird", "ParalaxBackground", "Pipes", "Sco
     exports.pipes = new Pipes_1.Pipes();
     exports.bird = new Bird_1.Bird();
     exports.score = new Score_1.Score(10, exports.canvas.height - 26);
+    var GameState;
+    (function (GameState) {
+        GameState[GameState["Waiting"] = 0] = "Waiting";
+        GameState[GameState["Flying"] = 1] = "Flying";
+    })(GameState = exports.GameState || (exports.GameState = {}));
+    var gameState = GameState.Waiting;
+    function GetGameState() { return gameState; }
+    exports.GetGameState = GetGameState;
+    function StartGame() {
+        exports.bird = new Bird_1.Bird();
+        exports.pipes = new Pipes_1.Pipes();
+        exports.score = new Score_1.Score(10, exports.canvas.height - 26);
+        gameState = GameState.Flying;
+    }
+    exports.StartGame = StartGame;
+    function StopGame() { gameState = GameState.Waiting; }
+    exports.StopGame = StopGame;
     function Update() {
-        if (exports.bird.IsAlive() === false)
-            return;
         Render();
         exports.bird.Update();
         exports.pipes.Update();
@@ -333,7 +349,6 @@ define("Bird", ["require", "exports", "Animator", "GameObject", "Main", "Rect"],
             ]);
             super("bird", new Rect_4.Rect(Main_5.canvas.width / Main_5.renderScale * 0.2 - 10, Main_5.canvas.height / Main_5.renderScale / 2 - 10, 20, 20), animator);
             this.yVelocity = 0;
-            this.alive = true;
             const birdReference = this;
             document.addEventListener("keydown", (event) => Bird.OnKeyDown(event, birdReference), false);
             document.addEventListener("touchstart", () => birdReference.Jump(), false);
@@ -344,17 +359,18 @@ define("Bird", ["require", "exports", "Animator", "GameObject", "Main", "Rect"],
             }
         }
         Jump() {
+            if ((0, Main_5.GetGameState)() == Main_5.GameState.Waiting)
+                (0, Main_5.StartGame)();
             this.yVelocity += 150;
             this.jumped = true;
         }
-        IsAlive() {
-            return this.alive;
-        }
         Die() {
-            this.alive = false;
+            (0, Main_5.StopGame)();
         }
         Update() {
             super.Update();
+            if ((0, Main_5.GetGameState)() == Main_5.GameState.Waiting)
+                return;
             this.rect.y = Math.max(0, this.rect.y + this.yVelocity * (1 / Main_5.fps));
             this.rect.y = Math.min(Main_5.canvas.height / Main_5.renderScale - this.rect.height, this.rect.y);
             this.yVelocity -= 150 * (1 / Main_5.fps);

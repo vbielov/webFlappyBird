@@ -1,6 +1,6 @@
 import { Animator } from "./Animator";
 import { GameObject } from "./GameObject";
-import { bird, canvas, fps, pipes, renderScale } from "./Main";
+import { bird, canvas, fps, GameState, GetGameState, pipes, renderScale } from "./Main";
 import { Rect } from "./Rect";
 
 export class ParalaxBackground extends GameObject
@@ -31,7 +31,7 @@ export class ParalaxBackground extends GameObject
         {
             this.backgrounds[i].rect.x -= (pipes.GetCurrentSpeed() * paralaxScale * (1 / fps));
             // random numbers....
-            this.backgrounds[i].rect.y = -(bird.rect.y - canvas.height / 2 / renderScale) * 0.1 - 50;
+            // this.backgrounds[i].rect.y = -(bird.rect.y - canvas.height / 2 / renderScale) * 0.1 - 50;
         }
 
         for(var i = 0; i < this.backgrounds.length; i++)
@@ -43,7 +43,7 @@ export class ParalaxBackground extends GameObject
                 {
                     maxPos = Math.max(this.backgrounds[p].rect.x + this.backgrounds[p].rect.width, maxPos);
                 }
-                this.backgrounds[i].rect.x = maxPos;
+                this.backgrounds[i].rect.x = Math.floor(maxPos);
             }
         }
     }

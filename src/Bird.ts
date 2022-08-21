@@ -1,12 +1,12 @@
 import { Animator } from "./Animator";
 import { GameObject } from "./GameObject";
-import { canvas, fps, renderScale } from "./Main";
+import { canvas, fps, renderScale, GetGameState, StartGame, StopGame, GameState } from "./Main";
 import { Rect } from "./Rect";
+
 
 export class Bird extends GameObject
 {
     yVelocity: number = 0;
-    private alive: boolean = true;
 
     constructor()
     {
@@ -35,6 +35,7 @@ export class Bird extends GameObject
 
     private Jump(): void
     {
+        if(GetGameState() == GameState.Waiting) StartGame();
         this.yVelocity += 150;
         this.jumped = true;
     }
@@ -42,19 +43,15 @@ export class Bird extends GameObject
     lockedTill: number;
     currentState: string;
 
-    IsAlive(): boolean
-    {
-        return this.alive;
-    }
-
     Die(): void
     {
-        this.alive = false;
+        StopGame();
     }
 
     Update(): void 
     {
         super.Update();
+        if(GetGameState() == GameState.Waiting) return;
 
         // Position update
         this.rect.y = Math.max(0, this.rect.y + this.yVelocity * (1 / fps));
